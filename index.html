@@ -359,7 +359,7 @@
     <!-- Cart Modal -->
     <div id="cart-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
         <div class="flex items-center justify-center min-h-screen">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 h-full max-h-screen flex flex-col">
                 <div class="p-6 border-b border-gray-200 flex justify-between items-center">
                     <h3 class="text-2xl font-bold">Ваш заказ</h3>
                     <button id="close-cart" class="text-gray-500 hover:text-gray-700">
@@ -367,12 +367,12 @@
                     </button>
                 </div>
                 
-                <div class="overflow-y-auto flex-grow px-6">
-                    <div id="cart-items" class="divide-y divide-gray-200">
-                        <!-- Cart items will be loaded here dynamically -->
-                        <p class="py-8 text-center text-gray-500">Ваша корзина пуста</p>
-                    </div>
-                </div>
+              <div class="flex-grow px-6 overflow-y-auto" style="min-height:0;">
+    <div id="cart-items" class="divide-y divide-gray-200">
+        <!-- Cart items will be loaded here dynamically -->
+        <p class="py-8 text-center text-gray-500">Ваша корзина пуста</p>
+    </div>
+</div>
                 
                 <div class="p-6 border-t border-gray-200">
                     <div class="flex justify-between items-center mb-6">
@@ -1104,6 +1104,23 @@
                 }
             });
         }
+----------------------------------------
+	// Prevent background scroll when cart modal is open
+function openCartModal() {
+    cartModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    // ...any other logic, e.g., updateCartModal()...
+}
+
+function closeCartModal() {
+    cartModal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// Update your event listeners to use these:
+cartIcon.addEventListener('click', openCartModal);
+closeCart.addEventListener('click', closeCartModal);
+	    ------------------------------------------
     </script>
 </body>
 </html>

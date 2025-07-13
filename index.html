@@ -1171,7 +1171,7 @@ function updateAddToCartButton(productId) {
                 checkoutForm.classList.toggle('hidden');
             });
             // с дипсика 13.07
-		// Order form submission
+// Order form submission
 orderForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -1179,9 +1179,8 @@ orderForm.addEventListener('submit', async (e) => {
     const email = document.getElementById('email').value;
     const phone = document.getElementById('phone').value;
     const comment = document.getElementById('comment').value;
-    const fileInput = document.getElementById('file');
     
-    // Подготовка данных для отправки
+    // Prepare order data
     const orderData = {
         name,
         email,
@@ -1196,7 +1195,12 @@ orderForm.addEventListener('submit', async (e) => {
     };
     
     try {
-        // Отправка данных на сервер
+        // Show loading state
+        const submitBtn = orderForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Отправка...';
+        
+        // Send order data
         const response = await fetch('send_order.php', {
             method: 'POST',
             headers: {
@@ -1205,13 +1209,17 @@ orderForm.addEventListener('submit', async (e) => {
             body: JSON.stringify(orderData)
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
         
         if (result.success) {
-            // Показ сообщения об успехе
+            // Show success message
             showNotification('Ваш заказ успешно отправлен!');
             
-            // Сброс формы и корзины
+            // Reset form and cart
             orderForm.reset();
             cart = [];
             updateCartUI();
@@ -1220,11 +1228,16 @@ orderForm.addEventListener('submit', async (e) => {
             cartModal.classList.add('hidden');
             document.body.style.overflow = '';
         } else {
-            showNotification('Ошибка: ' + result.message);
+            throw new Error(result.message || 'Ошибка при обработке заказа');
         }
     } catch (error) {
         console.error('Ошибка:', error);
-        showNotification('Произошла ошибка при отправке заказа');
+        showNotification(`Ошибка: ${error.message}`);
+    } finally {
+        // Reset submit button
+        const submitBtn = orderForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Отправить заказ';
     }
 }); // конец с дипсика 13,07
 		

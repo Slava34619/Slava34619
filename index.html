@@ -16,6 +16,18 @@
   }
 }
         /* Custom styles */
+	    /* с деепск 13.07 начало */
+	    .add-to-cart-btn.bg-gray-400 {
+    background-color: #9ca3af;
+}
+.add-to-cart-btn.bg-gray-400:hover {
+    background-color: #6b7280;
+}
+.add-to-cart-btn[disabled] {
+    opacity: 1;
+    cursor: not-allowed;
+}
+	    /* с деепск 13.07 конец */
         .product-card {
             transition: all 0.3s ease;
         }
@@ -717,9 +729,40 @@
             productsToDisplay.forEach(product => {
                 const productCard = document.createElement('div');
                 productCard.className = 'product-card bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full';
+		    /* с деепсик 13.07 */
+		    productCard.dataset.id = product.id; // Добавляем ID продукта к карточке
+		    /* с деепсик конец 13.07 */
                 productCard.dataset.category = product.category;
-                
-                productCard.innerHTML = `
+                // с деепсек 13.07
+		    productCard.innerHTML = `
+    <div class="p-4 flex flex-col h-full">
+        <div class="mb-4 flex items-center justify-center bg-white-100" style="height: 180px;">
+            <img src="${product.image}" alt="${product.name}" class="max-h-full max-w-full object-contain rounded-lg">
+        </div>
+        <h3 class="text-lg font-semibold mb-2">${product.name}</h3>
+        <p class="text-gray-600 text-sm mb-4 flex-grow">${product.description}</p>
+        <div class="mt-auto">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-xl font-bold">${product.price} руб./${product.unit}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center border border-gray-300 rounded-lg">
+                    <button class="decrement-btn px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-l-lg">-</button>
+                    <input type="number" value="1" min="1" class="quantity-input w-24 text-center border-t border-b border-gray-300 px-2 py-1">
+                    <button class="increment-btn px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-r-lg">+</button>
+                </div>
+                <button class="add-to-cart-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-300 flex items-center" data-id="${product.id}">
+                    <i class="fas fa-shopping-cart mr-2"></i> В корзину
+                </button>
+            </div>
+        </div>
+    </div>
+    // Проверяем, какие товары уже в корзине и обновляем кнопки
+cart.forEach(item => {
+    updateAddToCartButton(item.id);
+});
+`; // конец с деепсик 13.07
+            /*    productCard.innerHTML = `
                     <div class="p-4 flex flex-col h-full">
   <div class="mb-4 flex items-center justify-center bg-white-100" style="height: 180px;">
     <img src="${product.image}" alt="${product.name}" class="max-h-full max-w-full object-contain rounded-lg">
@@ -741,7 +784,7 @@
                             </button>
                         </div>
                     </div>
-                `;
+                `; */
                 
                 productsContainer.appendChild(productCard);
             });
@@ -799,8 +842,49 @@
                 }
             });
         }
+// с депсеек 13.97 
+	    function addToCart(product, quantity) {
+    // Проверяем, есть ли товар уже в корзине
+    const existingItem = cart.find(item => item.id === product.id);
+    
+    if (existingItem) {
+        existingItem.quantity += quantity;
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: quantity,
+            unit: product.unit
+        });
+    }
+    
+    // Обновляем UI корзины
+    updateCartUI();
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Обновляем кнопку добавления
+    updateAddToCartButton(product.id);
+    
+    // Показываем уведомление
+    showNotification(`${quantity} ${product.unit} "${product.name}" добавлено в корзину`);
+}
 
-        // Add to cart function
+// Новая функция для обновления кнопки
+function updateAddToCartButton(productId) {
+    const buttons = document.querySelectorAll('.add-to-cart-btn');
+    
+    buttons.forEach(button => {
+        const card = button.closest('.product-card');
+        if (parseInt(card.dataset.id) === productId) {
+            button.innerHTML = '<i class="fas fa-check mr-2"></i> В корзине';
+            button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            button.classList.add('bg-gray-400', 'hover:bg-gray-500', 'cursor-default');
+            button.disabled = true;
+        }
+    });
+} // конец с деепсек 13.07
+     /*   // Add to cart function
         function addToCart(product, quantity) {
             // Check if product already exists in cart
             const existingItem = cart.find(item => item.id === product.id);
@@ -823,7 +907,7 @@
             
             // Show notification
             showNotification(`${quantity} ${product.unit} "${product.name}" добавлено в корзину`);
-        }
+        } 
 
         // Update cart UI
         function updateCartUI() {
@@ -835,7 +919,7 @@
                 cartCount.classList.remove('hidden');
             } else {
                 cartCount.classList.add('hidden');
-            }
+            } */
             
             // Update mini cart
             updateMiniCart();

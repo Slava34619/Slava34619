@@ -2,16 +2,19 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// 1. Загрузка необходимых файлов PHPMailer
+// Загрузка PHPMailer
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 
-// 2. Настройка кодировки и заголовков
+// Настройка заголовков для JSON и CORS
 header('Content-Type: application/json; charset=utf-8');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
 mb_internal_encoding('UTF-8');
 
-// 3. Логирование (создаем лог-файл)
+// Логирование
 $logFile = __DIR__ . '/email_logs/' . date('Y-m-d') . '.log';
 if (!file_exists(__DIR__ . '/email_logs')) {
     mkdir(__DIR__ . '/email_logs', 0755, true);
@@ -22,15 +25,20 @@ function logMessage($message, $logFile) {
     file_put_contents($logFile, $timestamp . ' ' . $message . PHP_EOL, FILE_APPEND);
 }
 
-// 4. Обработка входящих данных
 try {
-    // Проверка метода запроса
+    // Разрешаем только POST-запросы
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new Exception('Метод не поддерживается');
+        http_response_code(405);
+        throw new Exception('Разрешен только метод POST');
     }
 
-    // Получение данных формы
-    $postData = array_merge($_POST, json_decode(file_get_contents('php://input'), true) ?: []);
+    // Получаем JSON данные
+    $json = file_get_contents('php://input');
+    $postData = json_decode($json, true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception('Неверный формат JSON данных');
+    }
 
     // Валидация обязательных полей
     if (empty($postData['name']) || empty($postData['phone'])) {
@@ -43,17 +51,11 @@ try {
     $phone = htmlspecialchars($postData['phone']);
     $comment = htmlspecialchars($postData['comment'] ?? '');
 
-    // 5. Создание PHPMailer
+    // Создание PHPMailer
     $mail = new PHPMailer(true);
     $mail->CharSet = 'UTF-8';
     
-    // Включение логирования (для отладки)
-    $mail->SMTPDebug = 2; // 0 = off, 1 = client, 2 = client and server
-    $mail->Debugoutput = function($str, $level) use ($logFile) {
-        logMessage("SMTP (level $level): $str", $logFile);
-    };
-
-    // 6. Настройка SMTP (замените на свои данные)
+    // Настройка SMTP
     $mail->isSMTP();
     $mail->Host = 'smtp.mail.ru';
     $mail->SMTPAuth = true;
@@ -62,45 +64,14 @@ try {
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
-    // 7. Настройка письма
+    // Настройка письма
     $mail->setFrom('snabpromgroup@mail.ru', 'ПромТехСнаб');
     $mail->addAddress('snabpromgroup@mail.ru');
     if (!empty($email)) {
         $mail->addReplyTo($email, $name);
     }
 
-    // 8. Обработка вложения
-    if (!empty($_FILES['file']['tmp_name'])) {
-        // Проверка типа файла
-        $allowedTypes = [
-            'application/pdf', 
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'image/jpeg', 
-            'image/png',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        ];
-        
-        $fileType = mime_content_type($_FILES['file']['tmp_name']);
-        
-        if (!in_array($fileType, $allowedTypes)) {
-            throw new Exception('Недопустимый тип файла. Разрешены: PDF, DOC, DOCX, JPEG, PNG, XLS, XLSX');
-        }
-
-        // Проверка размера файла (до 10MB)
-        if ($_FILES['file']['size'] > 10 * 1024 * 1024) {
-            throw new Exception('Файл слишком большой. Максимальный размер: 10MB');
-        }
-
-        // Безопасное имя файла
-        $safeFilename = preg_replace('/[^a-z0-9\._-]+/i', '_', $_FILES['file']['name']);
-        $mail->addAttachment($_FILES['file']['tmp_name'], $safeFilename);
-        
-        logMessage("Прикреплен файл: $safeFilename (тип: $fileType)", $logFile);
-    }
-
-    // 9. Формирование содержимого письма
+    // Формирование содержимого письма
     $message = "<h2>Новый заказ с сайта ПромТехСнаб</h2>";
     $message .= "<p><strong>Имя:</strong> {$name}</p>";
     $message .= "<p><strong>Email:</strong> {$email}</p>";
@@ -126,7 +97,7 @@ try {
     $mail->Body = $message;
     $mail->AltBody = strip_tags($message);
 
-    // 10. Отправка письма
+    // Отправка письма
     $mail->send();
     
     logMessage("Письмо успешно отправлено для $name ($phone)", $logFile);
@@ -134,6 +105,7 @@ try {
 
 } catch (Exception $e) {
     logMessage("ОШИБКА: " . $e->getMessage(), $logFile);
+    http_response_code(400);
     echo json_encode([
         'success' => false, 
         'message' => 'Произошла ошибка: ' . $e->getMessage()

@@ -782,7 +782,7 @@
 		    /* с деепсик конец 13.07 */
                 productCard.dataset.category = product.category;
                 // с деепсек 13.07
-		    productCard.innerHTML = `
+		 productCard.innerHTML = `
     <div class="p-4 flex flex-col h-full">
         <div class="mb-4 flex items-center justify-center bg-white-100" style="height: 180px;">
             <img src="${product.image}" alt="${product.name}" class="max-h-full max-w-full object-contain rounded-lg">
@@ -805,11 +805,8 @@
             </div>
         </div>
     </div>
-    // Проверяем, какие товары уже в корзине и обновляем кнопки
-cart.forEach(item => {
-    updateAddToCartButton(item.id);
-});
-`; // конец с деепсик 13.07
+`;
+		    // конец с деепсик 13.07
             /*    productCard.innerHTML = `
                     <div class="p-4 flex flex-col h-full">
   <div class="mb-4 flex items-center justify-center bg-white-100" style="height: 180px;">
@@ -836,7 +833,12 @@ cart.forEach(item => {
                 
                 productsContainer.appendChild(productCard);
             });
+// Проверяем, какие товары уже в корзине и обновляем кнопки с деепсик 13.07
+cart.forEach(item => {
+    updateAddToCartButton(item.id);
 
+	// конец деепсик 13.07 
+});
             // Add event listeners to quantity controls
             document.querySelectorAll('.decrement-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -955,7 +957,7 @@ function updateAddToCartButton(productId) {
             
             // Show notification
             showNotification(`${quantity} ${product.unit} "${product.name}" добавлено в корзину`);
-        } 
+        } */
 
         // Update cart UI
         function updateCartUI() {
@@ -967,7 +969,7 @@ function updateAddToCartButton(productId) {
                 cartCount.classList.remove('hidden');
             } else {
                 cartCount.classList.add('hidden');
-            } */
+            } 
             
             // Update mini cart
             updateMiniCart();

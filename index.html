@@ -1036,8 +1036,65 @@
             checkoutBtn.addEventListener('click', () => {
                 checkoutForm.classList.toggle('hidden');
             });
+            // с дипсика 13.07
+		// Order form submission
+orderForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+    const comment = document.getElementById('comment').value;
+    const fileInput = document.getElementById('file');
+    
+    // Подготовка данных для отправки
+    const orderData = {
+        name,
+        email,
+        phone,
+        comment,
+        cart: cart.map(item => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            unit: item.unit
+        }))
+    };
+    
+    try {
+        // Отправка данных на сервер
+        const response = await fetch('send_order.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Показ сообщения об успехе
+            showNotification('Ваш заказ успешно отправлен!');
             
-            // Order form submission
+            // Сброс формы и корзины
+            orderForm.reset();
+            cart = [];
+            updateCartUI();
+            localStorage.setItem('cart', JSON.stringify(cart));
+            checkoutForm.classList.add('hidden');
+            cartModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        } else {
+            showNotification('Ошибка: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showNotification('Произошла ошибка при отправке заказа');
+    }
+}); // конец с дипсика 13,07
+		
+          /*  // Order form submission
             orderForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 
@@ -1049,6 +1106,7 @@
                 const phone = document.getElementById('phone').value;
                 const comment = document.getElementById('comment').value;
                 const fileInput = document.getElementById('file');
+		    
                 
                 // Create order summary
                 let orderSummary = `
@@ -1086,7 +1144,7 @@
                 
                 // Show notification
                 showNotification('Ваш заказ успешно отправлен!');
-            });
+            }); */
             
             // Reviews carousel
             prevReviewBtn.addEventListener('click', () => {

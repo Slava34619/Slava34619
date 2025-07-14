@@ -1170,71 +1170,7 @@ function updateAddToCartButton(productId) {
             checkoutBtn.addEventListener('click', () => {
                 checkoutForm.classList.toggle('hidden');
             });
-            // с дипсика 13.07
-// Order form submission
-orderForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const phone = document.getElementById('phone').value;
-    const comment = document.getElementById('comment').value;
-    
-    // Prepare order data
-    const orderData = {
-        name,
-        email,
-        phone,
-        comment,
-        cart: cart.map(item => ({
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            unit: item.unit
-        }))
-    };
-    
-    try {
-        // Show loading state
-        const submitBtn = orderForm.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Отправка...';
-        
-        // Send order data
-       // Используйте это:
-const botToken = "7997679768:AAElsp7dWOIA54-3T533cZ2vAdN0hOu-ClM"; // Например: "654321:ABC-DEF1234"
-const chatId = "7997679768";      // Например: "123456789"
 
-async function sendToTelegram(orderData) {
-  const text = `📦 *Новый заказ*:
-  👤 *Имя*: ${orderData.name}
-  📞 *Телефон*: ${orderData.phone}
-  📧 *Email*: ${orderData.email}
-  💬 *Комментарий*: ${orderData.comment || '—'}
-  
-  🛒 *Товары*:
-  ${orderData.cart.map(item => `- ${item.name}: ${item.quantity} ${item.unit} × ${item.price} руб.`).join('\n')}
-  
-  💰 *Итого*: ${orderData.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)} руб.`;
-
-  try {
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: text,
-        parse_mode: 'Markdown'
-      })
-    });
-
-    if (!response.ok) throw new Error('Ошибка Telegram API');
-    return { success: true, message: 'Заказ отправлен!' };
-  } catch (error) {
-    console.error('Ошибка:', error);
-    return { success: false, message: 'Ошибка отправки: ' + error.message };
-  }
-}
 
 // Пример вызова при отправке формы:
 orderForm.addEventListener('submit', async (e) => {

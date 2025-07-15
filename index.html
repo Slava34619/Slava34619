@@ -868,7 +868,7 @@ cart.forEach(item => {
             });
         }
 
-        // Filter products by category
+      // Filter products by category
         function filterProducts(category) {
             if (category === 'all') {
                 displayProducts(products);
@@ -880,10 +880,10 @@ cart.forEach(item => {
             // Update active category button
             categoryButtons.forEach(btn => {
                 if (btn.textContent.includes(category === 'all' ? 'Все товары' : 
-                    category === 'hb-gloves' ? 'Перчатки ХБ' :
-                    category === 'verkhonki' ? 'Верхонки' :
-                    category === 'waffle' ? 'Вафельное полотно' :
-                    category === 'nonwoven' ? 'Нетканое полотно' : 'Перчатки (прочие)')) {
+                    category === 'Перчатки ХБ' ? 'Перчатки ХБ' : // Corrected
+                    category === 'Верхонки' ? 'Верхонки' : // Corrected
+                    category === 'Вафельное полотно' ? 'Вафельное полотно' : // Corrected
+                    category === 'Нетканое полотно' ? 'Нетканое полотно' : 'Перчатки обливные')) { // Corrected and adjusted for 'Перчатки обливные'
                     btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
                     btn.classList.add('bg-blue-600', 'text-white');
                 } else {

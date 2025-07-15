@@ -722,7 +722,7 @@
             },
         ];
 
-        // Cart Data
+  // Cart Data
         let cart = [];
 
         // DOM Elements
@@ -751,13 +751,408 @@
         const reviewsCarousel = document.getElementById('reviews-carousel');
         let currentReview = 0;
 
-        // Product Filters
-        const categoryButtons = document.querySelectorAll('.category-btn');
+        // Product Filters (Moved to global/DOMContentLoaded scope)
+        const categoryButtons = document.querySelectorAll('.category-btn'); // Define it here
 
-        // Initialize the page
+        // Display products (Moved to global/DOMContentLoaded scope)
+        function displayProducts(productsToDisplay) {
+            productsContainer.innerHTML = '';
+            
+            productsToDisplay.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full';
+		    productCard.dataset.id = product.id;
+                productCard.dataset.category = product.category;
+		 productCard.innerHTML = `
+    <div class="p-4 flex flex-col h-full">
+        <div class="mb-4 flex items-center justify-center bg-white-100" style="height: 180px;">
+            <img src="${product.image}" alt="${product.name}" class="max-h-full max-w-full object-contain rounded-lg">
+        </div>
+        <h3 class="text-lg font-semibold mb-2">${product.name}</h3>
+        <p class="text-gray-600 text-sm mb-4 flex-grow">${product.description}</p>
+        <div class="mt-auto">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-xl font-bold">${product.price} руб./${product.unit}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center border border-gray-300 rounded-lg">
+                    <button class="decrement-btn px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-l-lg">-</button>
+                    <input type="number" value="1" min="1" class="quantity-input w-24 text-center border-t border-b border-gray-300 px-2 py-1">
+                    <button class="increment-btn px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-r-lg">+</button>
+                </div>
+                <button class="add-to-cart-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-300 flex items-center" data-id="${product.id}">
+                    <i class="fas fa-shopping-cart mr-2"></i> В корзину
+                </button>
+            </div>
+        </div>
+    </div>
+`;
+                
+                productsContainer.appendChild(productCard);
+            });
+
+            cart.forEach(item => {
+                updateAddToCartButton(item.id);
+            });
+            // Add event listeners to quantity controls
+            document.querySelectorAll('.decrement-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const input = e.target.nextElementSibling;
+                    if (parseInt(input.value) > 1) {
+                        input.value = parseInt(input.value) - 1;
+                    }
+                });
+            });
+
+            document.querySelectorAll('.increment-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const input = e.target.previousElementSibling;
+                    input.value = parseInt(input.value) + 1;
+                });
+            });
+
+            // Add event listeners to add to cart buttons
+            document.querySelectorAll('.add-to-cart-btn').forEach((btn) => { // Removed index parameter
+                btn.addEventListener('click', () => {
+                    const productCard = btn.closest('.product-card');
+                    const productId = parseInt(productCard.dataset.id); // Get product ID from dataset
+                    const quantity = parseInt(productCard.querySelector('.quantity-input').value);
+                    const product = products.find(p => p.id === productId); // Find product by ID
+                    
+                    if (product) { // Ensure product is found
+                        addToCart(product, quantity);
+                    }
+                });
+            });
+        }
+
+        // Filter products by category (Moved to global/DOMContentLoaded scope)
+        function filterProducts(category) {
+            if (category === 'all') {
+                displayProducts(products);
+            } else {
+                const filteredProducts = products.filter(product => product.category === category);
+                displayProducts(filteredProducts);
+            }
+            
+            // Update active category button
+            categoryButtons.forEach(btn => {
+                if (btn.textContent.includes(category === 'all' ? 'Все товары' : 
+                    category === 'Перчатки ХБ' ? 'Перчатки ХБ' : 
+                    category === 'Верхонки' ? 'Верхонки' : 
+                    category === 'Вафельное полотно' ? 'Вафельное полотно' : 
+                    category === 'Нетканое полотно' ? 'Нетканое полотно' : 'Перчатки обливные')) {
+                    btn.classList.remove('bg-white', 'text-gray-800', 'border-gray-300');
+                    btn.classList.add('bg-blue-600', 'text-white');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
+                }
+            });
+        }
+
+	    function addToCart(product, quantity) {
+            const existingItem = cart.find(item => item.id === product.id);
+            
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    quantity: quantity,
+                    unit: product.unit
+                });
+            }
+            
+            updateCartUI();
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            updateAddToCartButton(product.id);
+            
+            showNotification(`${quantity} ${product.unit} "${product.name}" добавлено в корзину`);
+        }
+
+        function updateAddToCartButton(productId) {
+            const buttons = document.querySelectorAll('.add-to-cart-btn');
+            
+            buttons.forEach(button => {
+                const card = button.closest('.product-card');
+                if (parseInt(card.dataset.id) === productId) {
+                    button.innerHTML = '<i class="fas fa-check mr-2"></i> В корзине';
+                    button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    button.classList.add('bg-gray-400', 'hover:bg-gray-500', 'cursor-default');
+                    button.disabled = true;
+                }
+            });
+        }
+
+        function updateCartUI() {
+            const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+            cartCount.textContent = totalItems;
+            
+            if (totalItems > 0) {
+                cartCount.classList.remove('hidden');
+            } else {
+                cartCount.classList.add('hidden');
+            } 
+            
+            updateMiniCart();
+            
+            if (!cartModal.classList.contains('hidden')) {
+                updateCartModal();
+            }
+        }
+
+        function updateMiniCart() {
+            if (cart.length === 0) {
+                miniCart.innerHTML = '<p class="text-center py-4">Корзина пуста</p>';
+                return;
+            }
+            
+            let html = '<div class="divide-y divide-gray-200">';
+            
+            cart.forEach(item => {
+                html += `
+                    <div class="py-3 flex justify-between items-center">
+                        <div class="flex-1">
+                            <h4 class="font-medium">${item.name}</h4>
+                            <p class="text-sm text-gray-600">${item.quantity} ${item.unit} × ${item.price} руб.</p>
+                        </div>
+                        <button class="remove-item-btn text-red-500 hover:text-red-700" data-id="${item.id}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            html += `
+                </div>
+                <div class="border-t border-gray-200 pt-3 mt-3">
+                    <div class="flex justify-between font-semibold">
+                        <span>Итого:</span>
+                        <span>${total} руб.</span>
+                    </div>
+                </div>
+            `;
+            
+            miniCart.innerHTML = html;
+            
+            document.querySelectorAll('.remove-item-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    removeFromCart(id);
+                });
+            });
+        }
+
+        function updateCartModal() {
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="py-8 text-center text-gray-500">Ваша корзина пуста</p>';
+                cartGrandTotal.textContent = '0 руб.';
+                checkoutBtn.disabled = true;
+                checkoutForm.classList.add('hidden');
+                return;
+            }
+            
+            let html = '';
+            let total = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                html += `
+                    <div class="py-4 flex items-center justify-between border-b border-gray-200">
+                        <div class="flex-1">
+                            <h4 class="font-medium">${item.name}</h4>
+                            <p class="text-sm text-gray-600">${item.price} руб./${item.unit}</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center border border-gray-300 rounded-lg">
+                                <button class="decrement-modal-btn px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-l-lg" data-id="${item.id}">-</button>
+                                <input type="number" value="${item.quantity}" min="1" class="modal-quantity-input w-24 text-center border-t border-b border-gray-300 px-2 py-1" data-id="${item.id}">
+                                <button class="increment-modal-btn px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-r-lg" data-id="${item.id}">+</button>
+                            </div>
+                            <span class="font-semibold w-20 text-right">${itemTotal} руб.</span>
+                            <button class="remove-modal-item-btn text-red-500 hover:text-red-700" data-id="${item.id}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            cartItems.innerHTML = html;
+            cartGrandTotal.textContent = `${total} руб.`;
+            checkoutBtn.disabled = false;
+            
+            document.querySelectorAll('.decrement-modal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    const item = cart.find(item => item.id === id);
+                    const input = e.target.nextElementSibling;
+                    
+                    if (item.quantity > 1) {
+                        item.quantity -= 1;
+                        input.value = item.quantity;
+                        updateCartUI();
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.increment-modal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    const item = cart.find(item => item.id === id);
+                    const input = e.target.previousElementSibling;
+                    
+                    item.quantity += 1;
+                    input.value = item.quantity;
+                    updateCartUI();
+                });
+            });
+            
+            document.querySelectorAll('.modal-quantity-input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    const item = cart.find(item => item.id === id);
+                    const value = parseInt(e.target.value);
+                    
+                    if (value >= 1) {
+                        item.quantity = value;
+                        updateCartUI();
+                    } else {
+                        e.target.value = item.quantity;
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.remove-modal-item-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    removeFromCart(id);
+                });
+            });
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            showNotification('Товар удален из корзины');
+        }
+
+        function showNotification(message) {
+            notificationText.textContent = message;
+            notification.classList.remove('hidden');
+            
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Setup event listeners (This function will now only handle the remaining event listeners)
+        function setupEventListeners() {
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            cartIcon.addEventListener('click', () => {
+                cartModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                updateCartModal();
+            });
+            
+            closeCart.addEventListener('click', () => {
+                cartModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            });
+            
+            clearCartBtn.addEventListener('click', () => {
+                cart = [];
+                updateCartUI();
+                localStorage.setItem('cart', JSON.stringify(cart));
+                checkoutForm.classList.add('hidden');
+            });
+            
+            checkoutBtn.addEventListener('click', () => {
+                checkoutForm.classList.toggle('hidden');
+            });
+
+            orderForm.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              
+              const result = await sendToTelegram({ // Assuming sendToTelegram is defined elsewhere or will be defined
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                comment: document.getElementById('comment').value,
+                cart: cart.map(item => ({
+                  name: item.name,
+                  price: item.price,
+                  quantity: item.quantity,
+                  unit: item.unit
+                }))
+              });
+
+              if (result.success) {
+                showNotification('Заказ отправлен! Мы свяжемся с вами в Telegram.');
+                cart = [];
+                updateCartUI();
+              } else {
+                showNotification('Ошибка: ' + result.message);
+              }
+            });
+            
+            prevReviewBtn.addEventListener('click', () => {
+                currentReview = Math.max(currentReview - 1, 0);
+                updateCarousel();
+            });
+            
+            nextReviewBtn.addEventListener('click', () => {
+                currentReview = Math.min(currentReview + 1, 1);
+                updateCarousel();
+            });
+            
+            function updateCarousel() {
+                const carouselWidth = reviewsCarousel.offsetWidth;
+                const translateX = -currentReview * carouselWidth;
+                reviewsCarousel.querySelector('.flex').style.transform = `translateX(${translateX}px)`;
+            }
+            
+            cartModal.addEventListener('click', (e) => {
+                if (e.target === cartModal) {
+                    cartModal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        // Initialize the page (Ensuring all elements and functions are ready)
         document.addEventListener('DOMContentLoaded', () => {
-            // Load products
-            displayProducts(products);
+            // Setup event listeners for category buttons
+            categoryButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterProducts(btn.dataset.category); // Assuming data-category attribute is used
+                });
+            });
+
+            // If the onclick attributes are used directly in HTML, make sure they refer to globally accessible functions.
+            // For example, in your HTML:
+            // <button onclick="filterProducts('all')" ...>
+            // This expects filterProducts to be global. The current HTML has it, so the functions need to be global.
+
+            // It's better to remove onclick attributes from HTML and add event listeners here.
+            // For the category buttons, the onclick attributes are already present in the provided HTML.
+            // So, make filterProducts a global function.
+
+            // Load products initially
+            displayProducts(products); // This call is crucial for initial product display
             
             // Load cart from localStorage if exists
             const savedCart = localStorage.getItem('cart');
@@ -766,7 +1161,7 @@
                 updateCartUI();
             }
             
-            // Setup event listeners
+            // Setup other event listeners
             setupEventListeners();
         });
 
